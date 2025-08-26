@@ -1,0 +1,15 @@
+/target
+
+# 环境变量文件 - 包含敏感信息，不应上传到 git
+.env
+
+# 数据库文件
+*.db
+*.sqlite
+
+# IDE 配置文件
+.vscode/
+.idea/
+
+# 日志文件
+*.log
