@@ -42,15 +42,39 @@ pub fn default_page_size() -> u64 {
 pub struct Post {
     pub id: i64,
     pub title: String,
+    pub author_id: i64,
+    pub content: String,
+    pub tags: String,
+    pub copyright: String,
+    pub created_at: DateTime<Utc>,
+}
+
+/// 用于API响应的文章结构，包含作者用户名
+#[derive(Serialize, ToSchema, sqlx::FromRow)]
+pub struct PostResponse {
+    pub id: i64,
+    pub title: String,
     pub author: String,
     pub content: String,
     pub tags: String,
     pub copyright: String,
+    pub created_at: DateTime<Utc>,
 }
 
 /// 评论的数据模型
 #[derive(Serialize, Deserialize, Clone, sqlx::FromRow, ToSchema)]
 pub struct Comment {
+    #[sqlx(rename = "comment_id")]
+    pub id: i64,
+    pub post_id: i64,
+    pub author_id: i64,
+    pub content: String,
+    pub created_at: DateTime<Utc>,
+}
+
+/// 用于API响应的评论结构，包含作者用户名
+#[derive(Serialize, ToSchema, sqlx::FromRow)]
+pub struct CommentResponse {
     pub id: i64,
     pub post_id: i64,
     pub author: String,
@@ -63,8 +87,6 @@ pub struct Comment {
 pub struct CreatePost {
     #[validate(length(min = 1, max = 200, message = "标题长度必须在 1-200 字符之间"))]
     pub title: String,
-    #[validate(length(min = 1, max = 50, message = "作者名长度必须在 1-50 字符之间"))]
-    pub author: String,
     #[validate(length(min = 1, max = 10000, message = "内容长度必须在 1-10000 字符之间"))]
     pub content: String,
     #[validate(length(max = 200, message = "标签长度不能超过 200 字符"))]
@@ -76,8 +98,6 @@ pub struct CreatePost {
 /// 创建新评论时接收的数据
 #[derive(Deserialize, Clone, ToSchema, Validate)]
 pub struct CreateComment {
-    #[validate(length(min = 1, max = 50, message = "作者名长度必须在 1-50 字符之间"))]
-    pub author: String,
     #[validate(length(min = 1, max = 1000, message = "评论内容长度必须在 1-1000 字符之间"))]
     pub content: String,
 }
