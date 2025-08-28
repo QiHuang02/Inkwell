@@ -1,5 +1,15 @@
-use crate::{errors::{AppError, ErrorResponse}, models::{AppState, Claims, Comment, CommentResponse, CreateComment, User}, utils::{check_delete_result, created_response}, validation::ValidatedJson};
-use axum::{extract::{Path, State}, http::StatusCode, response::IntoResponse, Json, Extension};
+use crate::{
+    errors::{AppError, ErrorResponse},
+    models::{AppState, Claims, Comment, CommentResponse, CreateComment, User},
+    utils::{check_delete_result, created_response},
+    validation::ValidatedJson,
+};
+use axum::{
+    extract::{Path, State}, http::StatusCode,
+    response::IntoResponse,
+    Extension,
+    Json,
+};
 
 #[utoipa::path(
     get,
@@ -17,9 +27,9 @@ pub async fn get_comments_for_post(
     let comments = sqlx::query_as::<_, CommentResponse>(
         "SELECT c.comment_id as id, c.post_id, u.username as author, c.content, c.created_at FROM comments c JOIN users u ON c.author_id = u.id WHERE c.post_id = ?",
     )
-    .bind(id as i64)
-    .fetch_all(&state.pool)
-    .await?;
+        .bind(id as i64)
+        .fetch_all(&state.pool)
+        .await?;
     Ok(Json(comments))
 }
 
@@ -52,11 +62,11 @@ pub async fn create_comment_for_post(
     let comment = sqlx::query_as::<_, Comment>(
         "INSERT INTO comments (post_id, author_id, content) VALUES (?, ?, ?) RETURNING *",
     )
-    .bind(post_id as i64)
-    .bind(user.id)
-    .bind(&payload.content)
-    .fetch_one(&state.pool)
-    .await?;
+        .bind(post_id as i64)
+        .bind(user.id)
+        .bind(&payload.content)
+        .fetch_one(&state.pool)
+        .await?;
 
     let comment_response = CommentResponse {
         id: comment.id,
@@ -100,11 +110,12 @@ pub async fn update_comment(
         .fetch_one(&state.pool)
         .await?;
 
-    let comment: Comment = sqlx::query_as("SELECT * FROM comments WHERE comment_id = ? AND post_id = ?")
-        .bind(comment_id as i64)
-        .bind(post_id as i64)
-        .fetch_one(&state.pool)
-        .await?;
+    let comment: Comment =
+        sqlx::query_as("SELECT * FROM comments WHERE comment_id = ? AND post_id = ?")
+            .bind(comment_id as i64)
+            .bind(post_id as i64)
+            .fetch_one(&state.pool)
+            .await?;
 
     if comment.author_id != user.id {
         return Err(AppError::authorization("无权限修改此评论"));
@@ -113,11 +124,11 @@ pub async fn update_comment(
     let updated_comment = sqlx::query_as::<_, Comment>(
         "UPDATE comments SET content = ? WHERE comment_id = ? AND post_id = ? RETURNING *",
     )
-    .bind(&payload.content)
-    .bind(comment_id as i64)
-    .bind(post_id as i64)
-    .fetch_one(&state.pool)
-    .await?;
+        .bind(&payload.content)
+        .bind(comment_id as i64)
+        .bind(post_id as i64)
+        .fetch_one(&state.pool)
+        .await?;
 
     let comment_response = CommentResponse {
         id: updated_comment.id,
@@ -157,11 +168,12 @@ pub async fn delete_comment(
         .fetch_one(&state.pool)
         .await?;
 
-    let comment: Comment = sqlx::query_as("SELECT * FROM comments WHERE comment_id = ? AND post_id = ?")
-        .bind(comment_id as i64)
-        .bind(post_id as i64)
-        .fetch_one(&state.pool)
-        .await?;
+    let comment: Comment =
+        sqlx::query_as("SELECT * FROM comments WHERE comment_id = ? AND post_id = ?")
+            .bind(comment_id as i64)
+            .bind(post_id as i64)
+            .fetch_one(&state.pool)
+            .await?;
 
     if comment.author_id != user.id {
         return Err(AppError::authorization("无权限删除此评论"));

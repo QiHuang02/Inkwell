@@ -8,17 +8,17 @@
 
 1. **复制环境变量模板**：
    ```bash
-   cp .env .env
+   cp .env.example .env
    ```
 
 2. **配置环境变量**：
    编辑 `.env` 文件，特别是以下重要配置：
-   
+
    ```bash
    # 生成强随机 JWT 密钥
    openssl rand -base64 64
    ```
-   
+
    将生成的密钥填入 `.env` 文件的 `JWT_SECRET` 字段。
 
 3. **安装依赖并运行**：
@@ -28,14 +28,14 @@
 
 ### 环境变量说明
 
-| 变量名 | 说明 | 默认值 | 必填 |
-|--------|------|--------|------|
-| `DATABASE_URL` | 数据库连接字符串 | `sqlite:blog.db` | ✅ |
-| `JWT_SECRET` | JWT 签名密钥 | - | ✅ |
-| `SERVER_HOST` | 服务器监听地址 | `127.0.0.1` | ❌ |
-| `SERVER_PORT` | 服务器监听端口 | `3000` | ❌ |
-| `DB_MAX_CONNECTIONS` | 数据库最大连接数 | `10` | ❌ |
-| `JWT_EXPIRATION_DAYS` | JWT 令牌有效期（天） | `1` | ❌ |
+| 变量名                   | 说明           | 默认值              |
+|-----------------------|--------------|------------------|
+| `DATABASE_URL`        | 数据库连接字符串     | `sqlite:blog.db` |
+| `JWT_SECRET`          | JWT 签名密钥     | -                |
+| `SERVER_HOST`         | 服务器监听地址      | `127.0.0.1`      |
+| `SERVER_PORT`         | 服务器监听端口      | `3000`           |
+| `DB_MAX_CONNECTIONS`  | 数据库最大连接数     | `10`             |
+| `JWT_EXPIRATION_DAYS` | JWT 令牌有效期（天） | `1`              |
 
 ## 📝 API 文档
 
@@ -48,7 +48,7 @@
 以下操作需要在请求头中包含有效的 JWT 令牌：
 
 - **POST** `/posts` - 创建文章
-- **PUT** `/posts/{id}` - 更新文章  
+- **PUT** `/posts/{id}` - 更新文章
 - **DELETE** `/posts/{id}` - 删除文章
 - **POST** `/posts/{id}/comments` - 创建评论
 - **PUT** `/posts/{post_id}/comments/{comment_id}` - 更新评论
@@ -75,8 +75,10 @@
    curl -X POST http://localhost:3000/posts \
      -H "Content-Type: application/json" \
      -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
-     -d '{"title": "我的文章", "author": "testuser", "content": "文章内容", "tags": "标签", "copyright": "版权信息"}'
+     -d '{"title": "我的文章", "content": "文章内容", "tags": "标签", "copyright": "版权信息"}'
    ```
+
+   **注意**: `author` 字段已从创建文章的请求体中移除，作者信息将自动从 JWT 令牌中提取。
 
 ## 🔒 安全提醒
 
@@ -91,11 +93,11 @@
 cargo check
 
 # 运行测试
-cargo test
+# cargo test
 
 # 代码格式化
-cargo fmt
+# cargo fmt
 
 # 代码检查
-cargo clippy
+# cargo clippy
 ```

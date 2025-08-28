@@ -1,4 +1,5 @@
 use axum::{http::StatusCode, response::IntoResponse, Json};
+use log::error;
 use serde::Serialize;
 use thiserror::Error;
 use utoipa::ToSchema;
@@ -77,6 +78,8 @@ impl IntoResponse for AppError {
             error: self.error_message(),
             code: status.as_u16(),
         };
+
+        tracing::error!(error = ?self, "请求处理失败");
 
         (status, Json(error_response)).into_response()
     }

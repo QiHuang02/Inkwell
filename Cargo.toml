@@ -10,7 +10,7 @@ serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.143"
 
 dotenvy = "0.15.7"
-sqlx = { version = "0.8.6", features = [ "runtime-tokio-rustls", "sqlite", "chrono" ] }
+sqlx = { version = "0.8.6", features = ["runtime-tokio-rustls", "sqlite", "chrono"] }
 
 chrono = { version = "0.4.41", features = ["serde"] }
 
@@ -21,5 +21,9 @@ bcrypt = "0.17.1"
 jsonwebtoken = "9.3.1"
 validator = { version = "0.20.0", features = ["derive"] }
 lazy_static = "1.4.0"
-regex = "1.10.0"
+regex = "1.11.2"
 thiserror = "2.0.9"
+
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+log = "0.4.27"

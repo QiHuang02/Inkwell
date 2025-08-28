@@ -1,5 +1,17 @@
-use crate::{errors::{AppError, ErrorResponse}, models::{AppState, Claims, CreatePost, PaginatedResponse, Pagination, Post, PostResponse, User}, utils::{check_delete_result, created_response}, validation::{format_validation_errors, ValidatedJson}};
-use axum::{extract::{Path, Query, State}, http::StatusCode, response::IntoResponse, Json, Extension};
+use crate::{
+    errors::{AppError, ErrorResponse},
+    models::{
+        AppState, Claims, CreatePost, PaginatedResponse, Pagination, Post, PostResponse, User,
+    },
+    utils::{check_delete_result, created_response},
+    validation::{format_validation_errors, ValidatedJson},
+};
+use axum::{
+    extract::{Path, Query, State}, http::StatusCode,
+    response::IntoResponse,
+    Extension,
+    Json,
+};
 use validator::Validate;
 
 #[utoipa::path(
@@ -37,10 +49,10 @@ pub async fn get_posts(
     let posts = sqlx::query_as::<_, PostResponse>(
         "SELECT p.*, u.username as author FROM posts p JOIN users u ON p.author_id = u.id ORDER BY p.id LIMIT ? OFFSET ?",
     )
-    .bind(pagination.page_size as i64)
-    .bind(offset as i64)
-    .fetch_all(&state.pool)
-    .await?;
+        .bind(pagination.page_size as i64)
+        .bind(offset as i64)
+        .fetch_all(&state.pool)
+        .await?;
 
     let response = PaginatedResponse {
         data: posts,
@@ -81,13 +93,13 @@ pub async fn create_post(
     let post = sqlx::query_as::<_, Post>(
         "INSERT INTO posts (title, author_id, content, tags, copyright) VALUES (?, ?, ?, ?, ?) RETURNING *",
     )
-    .bind(&payload.title)
-    .bind(user.id)
-    .bind(&payload.content)
-    .bind(&payload.tags)
-    .bind(&payload.copyright)
-    .fetch_one(&state.pool)
-    .await?;
+        .bind(&payload.title)
+        .bind(user.id)
+        .bind(&payload.content)
+        .bind(&payload.tags)
+        .bind(&payload.copyright)
+        .fetch_one(&state.pool)
+        .await?;
 
     let post_response = PostResponse {
         id: post.id,
@@ -119,9 +131,9 @@ pub async fn get_post_by_id(
     let post = sqlx::query_as::<_, PostResponse>(
         "SELECT p.*, u.username as author FROM posts p JOIN users u ON p.author_id = u.id WHERE p.id = ?",
     )
-    .bind(id as i64)
-    .fetch_one(&state.pool)
-    .await?;
+        .bind(id as i64)
+        .fetch_one(&state.pool)
+        .await?;
     Ok(Json(post))
 }
 
@@ -165,13 +177,13 @@ pub async fn update_post(
     let updated_post = sqlx::query_as::<_, Post>(
         "UPDATE posts SET title = ?, content = ?, tags = ?, copyright = ? WHERE id = ? RETURNING *",
     )
-    .bind(&payload.title)
-    .bind(&payload.content)
-    .bind(&payload.tags)
-    .bind(&payload.copyright)
-    .bind(id as i64)
-    .fetch_one(&state.pool)
-    .await?;
+        .bind(&payload.title)
+        .bind(&payload.content)
+        .bind(&payload.tags)
+        .bind(&payload.copyright)
+        .bind(id as i64)
+        .fetch_one(&state.pool)
+        .await?;
 
     let post_response = PostResponse {
         id: updated_post.id,
