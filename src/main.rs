@@ -1,19 +1,6 @@
-mod config;
-mod docs;
-mod errors;
-mod handlers;
-mod middleware;
-mod models;
-mod routes;
-mod utils;
-mod validation;
-
-use crate::{
-    config::Config, docs::ApiDoc, middleware::auth_middleware_filter, models::AppState,
-    routes::create_router,
-};
 use axum::Router;
 use dotenvy::dotenv;
+use inkwell::{create_router, docs::ApiDoc, middleware::auth_middleware_filter, AppState, Config};
 use sqlx::sqlite::SqlitePoolOptions;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
@@ -27,7 +14,7 @@ async fn main() {
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "Inkwell=info,tower_http=debug".into()),
+                .unwrap_or_else(|_| "inkwell=info,tower_http=debug".into()),
         )
         .with(tracing_subscriber::fmt::layer())
         .init();

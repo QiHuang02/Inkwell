@@ -10,6 +10,7 @@ use axum::{
     Extension,
     Json,
 };
+use chrono::Utc;
 
 #[utoipa::path(
     get,
@@ -25,7 +26,7 @@ pub async fn get_comments_for_post(
     Path(id): Path<u64>,
 ) -> Result<Json<Vec<CommentResponse>>, AppError> {
     let comments = sqlx::query_as::<_, CommentResponse>(
-        "SELECT c.comment_id as id, c.post_id, u.username as author, c.content, c.created_at FROM comments c JOIN users u ON c.author_id = u.id WHERE c.post_id = ?",
+        "SELECT c.comment_id as id, c.post_id, u.username as author, c.content, c.created_at FROM comments c JOIN users u ON c.author_id = u.id WHERE c.post_id = ? AND c.deleted_at IS NULL",
     )
         .bind(id as i64)
         .fetch_all(&state.pool)
@@ -53,21 +54,18 @@ pub async fn create_comment_for_post(
     json_payload: Json<CreateComment>,
 ) -> Result<impl IntoResponse, AppError> {
     let payload = json_payload.validate_json()?;
-
     let user: User = sqlx::query_as("SELECT * FROM users WHERE username = ?")
         .bind(&claims.sub)
         .fetch_one(&state.pool)
         .await?;
-
     let comment = sqlx::query_as::<_, Comment>(
         "INSERT INTO comments (post_id, author_id, content) VALUES (?, ?, ?) RETURNING *",
     )
-        .bind(post_id as i64)
-        .bind(user.id)
-        .bind(&payload.content)
-        .fetch_one(&state.pool)
-        .await?;
-
+    .bind(post_id as i64)
+    .bind(user.id)
+    .bind(&payload.content)
+    .fetch_one(&state.pool)
+    .await?;
     let comment_response = CommentResponse {
         id: comment.id,
         post_id: comment.post_id,
@@ -75,7 +73,6 @@ pub async fn create_comment_for_post(
         content: comment.content,
         created_at: comment.created_at,
     };
-
     Ok(created_response(comment_response))
 }
 
@@ -104,12 +101,10 @@ pub async fn update_comment(
     json_payload: Json<CreateComment>,
 ) -> Result<Json<CommentResponse>, AppError> {
     let payload = json_payload.validate_json()?;
-
     let user: User = sqlx::query_as("SELECT * FROM users WHERE username = ?")
         .bind(&claims.sub)
         .fetch_one(&state.pool)
         .await?;
-
     let comment: Comment =
         sqlx::query_as("SELECT * FROM comments WHERE comment_id = ? AND post_id = ?")
             .bind(comment_id as i64)
@@ -117,6 +112,9 @@ pub async fn update_comment(
             .fetch_one(&state.pool)
             .await?;
 
+    if comment.deleted_at.is_some() {
+        return Err(AppError::not_found("评论未找到"));
+    }
     if comment.author_id != user.id {
         return Err(AppError::authorization("无权限修改此评论"));
     }
@@ -124,12 +122,11 @@ pub async fn update_comment(
     let updated_comment = sqlx::query_as::<_, Comment>(
         "UPDATE comments SET content = ? WHERE comment_id = ? AND post_id = ? RETURNING *",
     )
-        .bind(&payload.content)
-        .bind(comment_id as i64)
-        .bind(post_id as i64)
-        .fetch_one(&state.pool)
-        .await?;
-
+    .bind(&payload.content)
+    .bind(comment_id as i64)
+    .bind(post_id as i64)
+    .fetch_one(&state.pool)
+    .await?;
     let comment_response = CommentResponse {
         id: updated_comment.id,
         post_id: updated_comment.post_id,
@@ -137,7 +134,6 @@ pub async fn update_comment(
         content: updated_comment.content,
         created_at: updated_comment.created_at,
     };
-
     Ok(Json(comment_response))
 }
 
@@ -167,7 +163,6 @@ pub async fn delete_comment(
         .bind(&claims.sub)
         .fetch_one(&state.pool)
         .await?;
-
     let comment: Comment =
         sqlx::query_as("SELECT * FROM comments WHERE comment_id = ? AND post_id = ?")
             .bind(comment_id as i64)
@@ -178,11 +173,14 @@ pub async fn delete_comment(
     if comment.author_id != user.id {
         return Err(AppError::authorization("无权限删除此评论"));
     }
+    if comment.deleted_at.is_some() {
+        return Ok(StatusCode::NO_CONTENT);
+    }
 
-    let result = sqlx::query("DELETE FROM comments WHERE comment_id = ?")
+    let result = sqlx::query("UPDATE comments SET deleted_at = ? WHERE comment_id = ?")
+        .bind(Utc::now())
         .bind(comment_id as i64)
         .execute(&state.pool)
         .await?;
-
     check_delete_result(result, "Comment")
 }

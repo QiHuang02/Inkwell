@@ -47,6 +47,7 @@ pub struct Post {
     pub tags: String,
     pub copyright: String,
     pub created_at: DateTime<Utc>,
+    pub deleted_at: Option<DateTime<Utc>>,
 }
 
 /// 用于API响应的文章结构，包含作者用户名
@@ -70,6 +71,7 @@ pub struct Comment {
     pub author_id: i64,
     pub content: String,
     pub created_at: DateTime<Utc>,
+    pub deleted_at: Option<DateTime<Utc>>,
 }
 
 /// 用于API响应的评论结构，包含作者用户名

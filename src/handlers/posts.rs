@@ -12,6 +12,7 @@ use axum::{
     Extension,
     Json,
 };
+use chrono::Utc;
 use validator::Validate;
 
 #[utoipa::path(
@@ -38,7 +39,7 @@ pub async fn get_posts(
         ))
     })?;
 
-    let total: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM posts")
+    let total: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM posts WHERE deleted_at IS NULL")
         .fetch_one(&state.pool)
         .await?;
     let total = total.0 as u64;
@@ -47,7 +48,7 @@ pub async fn get_posts(
     let total_pages = total.div_ceil(pagination.page_size);
 
     let posts = sqlx::query_as::<_, PostResponse>(
-        "SELECT p.*, u.username as author FROM posts p JOIN users u ON p.author_id = u.id ORDER BY p.id LIMIT ? OFFSET ?",
+        "SELECT p.*, u.username as author FROM posts p JOIN users u ON p.author_id = u.id WHERE p.deleted_at IS NULL ORDER BY p.id LIMIT ? OFFSET ?",
     )
         .bind(pagination.page_size as i64)
         .bind(offset as i64)
@@ -129,7 +130,7 @@ pub async fn get_post_by_id(
     Path(id): Path<u64>,
 ) -> Result<Json<PostResponse>, AppError> {
     let post = sqlx::query_as::<_, PostResponse>(
-        "SELECT p.*, u.username as author FROM posts p JOIN users u ON p.author_id = u.id WHERE p.id = ?",
+        "SELECT p.*, u.username as author FROM posts p JOIN users u ON p.author_id = u.id WHERE p.id = ? AND p.deleted_at IS NULL",
     )
         .bind(id as i64)
         .fetch_one(&state.pool)
@@ -170,6 +171,10 @@ pub async fn update_post(
         .fetch_one(&state.pool)
         .await?;
 
+    if post.deleted_at.is_some() {
+        return Err(AppError::not_found("文章未找到"));
+    }
+
     if post.author_id != user.id {
         return Err(AppError::authorization("无权限修改此文章"));
     }
@@ -177,13 +182,13 @@ pub async fn update_post(
     let updated_post = sqlx::query_as::<_, Post>(
         "UPDATE posts SET title = ?, content = ?, tags = ?, copyright = ? WHERE id = ? RETURNING *",
     )
-        .bind(&payload.title)
-        .bind(&payload.content)
-        .bind(&payload.tags)
-        .bind(&payload.copyright)
-        .bind(id as i64)
-        .fetch_one(&state.pool)
-        .await?;
+    .bind(&payload.title)
+    .bind(&payload.content)
+    .bind(&payload.tags)
+    .bind(&payload.copyright)
+    .bind(id as i64)
+    .fetch_one(&state.pool)
+    .await?;
 
     let post_response = PostResponse {
         id: updated_post.id,
@@ -231,7 +236,8 @@ pub async fn delete_post(
         return Err(AppError::authorization("无权限删除此文章"));
     }
 
-    let result = sqlx::query("DELETE FROM posts WHERE id = ?")
+    let result = sqlx::query("UPDATE posts SET deleted_at = ? WHERE id = ?")
+        .bind(Utc::now())
         .bind(id as i64)
         .execute(&state.pool)
         .await?;
