@@ -93,7 +93,7 @@
 cargo check
 
 # 运行测试
-# cargo test
+cargo test
 
 # 代码格式化
 # cargo fmt

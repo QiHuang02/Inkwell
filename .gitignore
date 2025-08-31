@@ -13,3 +13,5 @@
 
 # 日志文件
 *.log
+blog.db-shm
+blog.db-wal
