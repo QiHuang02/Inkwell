@@ -1,5 +1,5 @@
 use inkwell::{
-    config::Config, middleware::auth_middleware_filter, models::AppState, routes::create_router,
+    config::Config, models::AppState, routes::create_router,
 };
 use sqlx::SqlitePool;
 use tokio::net::TcpListener;
@@ -34,11 +34,7 @@ pub async fn spawn_app() -> String {
         config: config.clone(),
     };
 
-    let app = create_router()
-        .layer(axum::middleware::from_fn_with_state(
-            app_state.clone(),
-            auth_middleware_filter,
-        ))
+    let app = create_router(app_state.clone())
         .with_state(app_state);
 
     tokio::spawn(async move {

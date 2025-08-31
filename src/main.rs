@@ -1,6 +1,6 @@
 use axum::Router;
 use dotenvy::dotenv;
-use inkwell::{create_router, docs::ApiDoc, middleware::auth_middleware_filter, AppState, Config};
+use inkwell::{create_router, docs::ApiDoc, AppState, Config};
 use sqlx::sqlite::SqlitePoolOptions;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
@@ -38,11 +38,7 @@ async fn main() {
 
     let app = Router::new()
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
-        .merge(create_router())
-        .layer(axum::middleware::from_fn_with_state(
-            app_state.clone(),
-            auth_middleware_filter,
-        ))
+        .merge(create_router(app_state.clone()))
         .with_state(app_state);
 
     let listener = tokio::net::TcpListener::bind(&config.server_address())
