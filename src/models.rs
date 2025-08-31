@@ -62,6 +62,20 @@ pub struct PostResponse {
     pub created_at: DateTime<Utc>,
 }
 
+impl From<(Post, User)> for PostResponse {
+    fn from((post, user): (Post, User)) -> Self {
+        Self {
+            id: post.id,
+            title: post.title,
+            author: user.username,
+            content: post.content,
+            tags: post.tags,
+            copyright: post.copyright,
+            created_at: post.created_at,
+        }
+    }
+}
+
 /// 评论的数据模型
 #[derive(Serialize, Deserialize, Clone, sqlx::FromRow, ToSchema)]
 pub struct Comment {
@@ -82,6 +96,18 @@ pub struct CommentResponse {
     pub author: String,
     pub content: String,
     pub created_at: DateTime<Utc>,
+}
+
+impl From<(Comment, User)> for CommentResponse {
+    fn from((comment, user): (Comment, User)) -> Self {
+        Self {
+            id: comment.id,
+            post_id: comment.post_id,
+            author: user.username,
+            content: comment.content,
+            created_at: comment.created_at,
+        }
+    }
 }
 
 /// 创建新文章时接收的数据

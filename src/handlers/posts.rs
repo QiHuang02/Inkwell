@@ -4,13 +4,13 @@ use crate::{
         AppState, Claims, CreatePost, PaginatedResponse, Pagination, Post, PostResponse, User,
     },
     utils::{check_delete_result, created_response},
-    validation::{format_validation_errors, ValidatedJson},
+    validation::{ValidatedJson, format_validation_errors},
 };
 use axum::{
-    extract::{Path, Query, State}, http::StatusCode,
+    Extension, Json,
+    extract::{Path, Query, State},
+    http::StatusCode,
     response::IntoResponse,
-    Extension,
-    Json,
 };
 use chrono::Utc;
 use validator::Validate;
@@ -102,15 +102,7 @@ pub async fn create_post(
         .fetch_one(&state.pool)
         .await?;
 
-    let post_response = PostResponse {
-        id: post.id,
-        title: post.title,
-        author: user.username,
-        content: post.content,
-        tags: post.tags,
-        copyright: post.copyright,
-        created_at: post.created_at,
-    };
+    let post_response: PostResponse = (post, user).into();
 
     Ok(created_response(post_response))
 }
@@ -190,15 +182,7 @@ pub async fn update_post(
     .fetch_one(&state.pool)
     .await?;
 
-    let post_response = PostResponse {
-        id: updated_post.id,
-        title: updated_post.title,
-        author: user.username,
-        content: updated_post.content,
-        tags: updated_post.tags,
-        copyright: updated_post.copyright,
-        created_at: updated_post.created_at,
-    };
+    let post_response: PostResponse = (post, user).into();
 
     Ok(Json(post_response))
 }

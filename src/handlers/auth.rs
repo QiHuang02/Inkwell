@@ -6,14 +6,14 @@ use crate::{
     validation::ValidatedJson,
 };
 use axum::{
+    Json,
     extract::{Request, State},
-    http::{header, StatusCode},
+    http::{StatusCode, header},
     middleware::Next,
     response::{IntoResponse, Response},
-    Json,
 };
 use chrono::{Duration, Utc};
-use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
+use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
 
 pub async fn auth_middleware(
     State(state): State<AppState>,

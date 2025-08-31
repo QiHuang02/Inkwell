@@ -5,10 +5,10 @@ use crate::{
     validation::ValidatedJson,
 };
 use axum::{
-    extract::{Path, State}, http::StatusCode,
+    Extension, Json,
+    extract::{Path, State},
+    http::StatusCode,
     response::IntoResponse,
-    Extension,
-    Json,
 };
 use chrono::Utc;
 
@@ -66,13 +66,7 @@ pub async fn create_comment_for_post(
     .bind(&payload.content)
     .fetch_one(&state.pool)
     .await?;
-    let comment_response = CommentResponse {
-        id: comment.id,
-        post_id: comment.post_id,
-        author: user.username,
-        content: comment.content,
-        created_at: comment.created_at,
-    };
+    let comment_response: CommentResponse = (comment, user).into();
     Ok(created_response(comment_response))
 }
 
@@ -127,13 +121,7 @@ pub async fn update_comment(
     .bind(post_id as i64)
     .fetch_one(&state.pool)
     .await?;
-    let comment_response = CommentResponse {
-        id: updated_comment.id,
-        post_id: updated_comment.post_id,
-        author: user.username,
-        content: updated_comment.content,
-        created_at: updated_comment.created_at,
-    };
+    let comment_response: CommentResponse = (comment, user).into();
     Ok(Json(comment_response))
 }
 

@@ -1,6 +1,6 @@
 use axum::Router;
 use dotenvy::dotenv;
-use inkwell::{create_router, docs::ApiDoc, AppState, Config};
+use inkwell::{AppState, Config, create_router, docs::ApiDoc};
 use sqlx::sqlite::SqlitePoolOptions;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;

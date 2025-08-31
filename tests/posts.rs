@@ -1,5 +1,5 @@
 mod common;
-use common::{create_authenticated_user, spawn_app, TestUser};
+use common::{TestUser, create_authenticated_user, spawn_app};
 
 // 辅助函数：创建一个帖子并返回其 ID
 async fn create_post(client: &reqwest::Client, app_address: &str, token: &str) -> i64 {

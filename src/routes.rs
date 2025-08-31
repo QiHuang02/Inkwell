@@ -1,8 +1,8 @@
 use crate::handlers::*;
 use crate::models::AppState;
 use axum::{
-    routing::{get, post, put},
     Router,
+    routing::{get, post, put},
 };
 
 #[utoipa::path(
@@ -18,10 +18,7 @@ pub async fn root() -> &'static str {
 /// 创建一个总路由函数，供 main.rs 调用
 pub fn create_router(app_state: AppState) -> Router<AppState> {
     let protected_routes = Router::new()
-        .route(
-            "/posts",
-            post(create_post),
-        )
+        .route("/posts", post(create_post))
         .route("/posts/{id}", put(update_post).delete(delete_post))
         .route("/posts/{id}/comments", post(create_comment_for_post))
         .route(
